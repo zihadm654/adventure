@@ -28,11 +28,11 @@ export const sidebarLinks: SidebarNavItem[] = [
         authorizeOnly: UserRole.ADMIN,
       },
       {
-        href: "#/dashboard/posts",
+        href: "/dashboard/posts",
         icon: "post",
         title: "User Posts",
         authorizeOnly: UserRole.USER,
-        disabled: true,
+        // disabled: true,
       },
     ],
   },
@@ -41,7 +41,6 @@ export const sidebarLinks: SidebarNavItem[] = [
     items: [
       { href: "/dashboard/settings", icon: "settings", title: "Settings" },
       { href: "/", icon: "home", title: "Homepage" },
-      { href: "/docs", icon: "bookOpen", title: "Documentation" },
       {
         href: "#",
         icon: "messages",
