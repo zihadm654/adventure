@@ -1,14 +1,18 @@
 import "@/styles/globals.css";
 
 import { fontGeist, fontHeading, fontSans, fontUrban } from "@/assets/fonts";
+import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
+import { extractRouterConfig } from "uploadthing/server";
 
 import { cn, constructMetadata } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@/components/analytics";
 import ModalProvider from "@/components/modals/providers";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
+
+import { ourFileRouter } from "./api/uploadthing/core";
 
 interface RootLayoutProps {
   children: React.ReactNode;
@@ -29,6 +33,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           fontGeist.variable,
         )}
       >
+        <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
         <SessionProvider>
           <ThemeProvider
             attribute="class"

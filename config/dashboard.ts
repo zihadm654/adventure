@@ -14,9 +14,9 @@ export const sidebarLinks: SidebarNavItem[] = [
       },
       { href: "/dashboard", icon: "dashboard", title: "Dashboard" },
       {
-        href: "/dashboard/billing",
+        href: "/dashboard/hotels",
         icon: "billing",
-        title: "Billing",
+        title: "Hotels",
         authorizeOnly: UserRole.USER,
       },
       { href: "/dashboard/charts", icon: "lineChart", title: "Charts" },

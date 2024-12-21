@@ -150,14 +150,14 @@ const Gallery = () => {
                           : "h-[159px]"
                       }`}
                       title={
-                        "Dimension:" + " " + ((index + 1) % 2) === 0 ? 364 : 159
+                        "Dimension: " + ((index + 1) % 2 === 0 ? 364 : 159)
                       }
                     />
                   ))}
 
                   <div className="absolute bottom-0 left-0 h-12 w-full bg-gradient-to-t from-secondary/50 via-secondary/10 to-transparent"></div>
                 </div>
-                <div className="absolute right-4 top-4 flex flex-col gap-y-2">
+                {/* <div className="absolute right-4 top-4 flex flex-col gap-y-2">
                   <span
                     className="rounded-secondary cursor-pointer border border-primary bg-secondary p-1.5 transition-colors hover:border-secondary hover:bg-primary hover:text-white"
                     onClick={() => {
@@ -172,7 +172,6 @@ const Gallery = () => {
                       }
                     }}
                   >
-                    {/* <BiUpArrowAlt className="h-6 w-6" /> */}
                   </span>
                   <span
                     className="rounded-secondary cursor-pointer border border-primary bg-secondary p-1.5 transition-colors hover:border-secondary hover:bg-primary hover:text-white"
@@ -188,9 +187,8 @@ const Gallery = () => {
                       }
                     }}
                   >
-                    {/* <BiDownArrowAlt className="h-6 w-6" /> */}
                   </span>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

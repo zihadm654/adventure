@@ -15,7 +15,7 @@ import hotelTypes from "@/content/data/hotelTypes";
 // import { BiSolidStar } from "react-icons/bi";
 // import { useDispatch } from "react-redux";
 
-import useGetCountries from "@/hooks/useGetCountries";
+import useGetCountries from "@/hooks/useLocation";
 
 const FilterSidebar = () => {
   const [selectedCategory, setSelectedCategory] = useState([]);
@@ -112,39 +112,7 @@ const FilterSidebar = () => {
         {/* Choose Country */}
         <div className="flex flex-col gap-y-4 rounded border px-4 py-2">
           <h2 className="text-lg">Choose Country</h2>
-          <div className="flex h-40 flex-col gap-y-2.5 overflow-y-auto">
-            {countries?.length === 0 && <>Loading...</>}
-            {/* {countries?.map((country, index) => (
-              <label
-                key={index}
-                htmlFor={country.name}
-                className="flex flex-row items-center gap-x-1.5 text-sm"
-              >
-                <input
-                  type="checkbox"
-                  name={country.name}
-                  id={country.name}
-                  className="!rounded-secondary checked:bg-primary checked:text-primary"
-                  onChange={(e) => {
-                    const isChecked = e.target.checked;
-                    const updatedCountries = isChecked
-                      ? [...selectedCountries, country.name]
-                      : selectedCountries.filter((c) => c !== country.name);
-                    handleCountriesChange(updatedCountries);
-                  }}
-                />
-                <span className="flex flex-row items-center gap-x-2 truncate whitespace-normal">
-                  <LoadImage
-                    src={country.flag}
-                    alt={country.name}
-                    height={10}
-                    width={20}
-                  />
-                  {country.name}
-                </span>
-              </label>
-            ))} */}
-          </div>
+          <div className="flex h-40 flex-col gap-y-2.5 overflow-y-auto"></div>
         </div>
 
         {/* Price Range */}

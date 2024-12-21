@@ -35,7 +35,7 @@ const ImageSlider = ({ images, delay }) => {
       {images.map((image, index) => (
         <div
           key={index}
-          className={`absolute h-[512px] max-w-[364px] transform transition-transform duration-1000 ${
+          className={`absolute h-[512px] max-w-[364px] transition-transform duration-1000${
             index === currentImageIndex ? "translate-x-0" : "translate-x-full"
           }`}
         >
@@ -50,12 +50,12 @@ const ImageSlider = ({ images, delay }) => {
         </div>
       ))}
 
-      <div className="absolute bottom-4 left-0 right-0">
+      <div className="absolute inset-x-0 bottom-4">
         <div className="flex items-center justify-center gap-2">
           {images.map((_, i) => (
             <div
               key={i}
-              className={`h-3 w-3 rounded-full bg-white transition-all ${currentImageIndex === i ? "p-2" : "bg-opacity-50"} `}
+              className={`size-3 rounded-full bg-white transition-all ${currentImageIndex === i ? "p-2" : "bg-opacity-50"} `}
             />
           ))}
         </div>
