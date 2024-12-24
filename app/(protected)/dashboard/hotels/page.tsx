@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getHotels } from "@/actions/hotel-listings";
+import { getRooms } from "@/actions/room-listing";
 
 import { constructMetadata } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -15,15 +16,11 @@ export const metadata = constructMetadata({
 
 export default async function ChartsPage() {
   const { data } = await getHotels();
-  console.log(data, "hotels");
+  const rooms = await getRooms();
+  console.log(data, rooms.data, "hotels");
   return (
     <>
       <DashboardHeader heading="Hotels" text="List of hotels." />
-      <div className="flex flex-col gap-5">
-        <Button>
-          <Link href={"/dashboard/hotels/createHotel"}>Add Hotel</Link>
-        </Button>
-      </div>
       {data && <DataTable columns={columns} data={data} />}
     </>
   );

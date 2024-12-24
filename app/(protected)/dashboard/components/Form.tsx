@@ -2,22 +2,45 @@
 
 import { Fragment, useEffect, useState } from "react";
 import Image from "next/image";
-import { createHotel } from "@/actions/hotel-listings";
+import { useRouter } from "next/navigation";
+import {
+  createHotel,
+  deleteHotelById,
+  updateHotel,
+} from "@/actions/hotel-listings";
 import { imageRemove } from "@/actions/image-remove";
 import hotelTypes from "@/content/data/hotelTypes";
 import { UploadButton } from "@/utility/uploadthing";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Hotel, Room } from "@prisma/client";
 import { ICity, IState } from "country-state-city";
-import { Loader2, PencilLine, X } from "lucide-react";
+import { set } from "date-fns";
+import {
+  Link,
+  Loader2,
+  PencilLine,
+  Plus,
+  Terminal,
+  Trash2,
+  X,
+} from "lucide-react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { IoCloudUploadOutline } from "react-icons/io5";
 import { toast } from "sonner";
 
 import { hotelSchema, THotel } from "@/lib/validations/listing";
 import useLocation from "@/hooks/useLocation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -35,17 +58,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 
+import RoomCard from "./RoomCard";
+import RoomForm from "./RoomForm";
+
 interface HotelProps {
-  hotel: HotelWithRooms | null;
+  hotel?: HotelWithRooms | null;
 }
 export type HotelWithRooms = Hotel & { room: Room[] };
 
-const HotelForm = () => {
+const HotelForm = ({ hotel }: HotelProps) => {
   const form = useForm<THotel>({
     resolver: zodResolver(hotelSchema),
-    defaultValues: {
+    defaultValues: hotel || {
       title: "",
       description: "",
       image: "",
@@ -64,12 +91,17 @@ const HotelForm = () => {
       bar: false,
     },
   });
-
+  const router = useRouter();
   const [states, setStates] = useState<IState[]>([]);
   const [cities, setCities] = useState<ICity[]>([]);
   const [loading, setLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | undefined>(
+    hotel?.image || "",
+  );
   const [imageKey, setImageKey] = useState("");
+  const [isHotelDeleting, setIsHotelDeleting] = useState(false);
+  const [open, setOpen] = useState(false);
+
   const { getAllCountries, getCountryStates, getStateCities } = useLocation();
 
   useEffect(() => {
@@ -78,7 +110,7 @@ const HotelForm = () => {
     if (countryStates) {
       setStates(countryStates);
     }
-  }, [form, getCountryStates]);
+  }, [form.watch("country")]);
 
   useEffect(() => {
     const selectedCountry = form.watch("country");
@@ -87,7 +119,7 @@ const HotelForm = () => {
     if (stateCities) {
       setCities(stateCities);
     }
-  }, [form, getStateCities]);
+  }, [form.watch("country"), form.watch("state")]);
 
   const countries = getAllCountries();
 
@@ -100,18 +132,63 @@ const HotelForm = () => {
     }
   };
 
-  const onSubmit: SubmitHandler<THotel> = async (values) => {
-    console.log(values);
+  //delete hotel and image
+  const handleDeleteHotel = async (hotel: HotelWithRooms) => {
+    // setIsHotelDeleting(true);
+    const getImageKey = (src: string) =>
+      src.substring(src.lastIndexOf("/") + 1);
     try {
-      const result = await createHotel(values);
-      if (result?.success) {
-        toast.success(result.success);
+      const imageKey = getImageKey(hotel.image);
+      const res = await imageRemove(imageKey);
+      if (res.status === 401) {
         setImageUrl("");
         setImageKey("");
-        form.reset();
+        toast.success("image removed successfully");
       }
+      await deleteHotelById(hotel.id);
+
+      // setIsHotelDeleting(false);
+      toast.success("Hotel deleted successfully");
     } catch (error) {
-      toast.error(error);
+      console.log(error);
+      toast.error("Error deleting hotel");
+      // setIsHotelDeleting(false);
+    }
+  };
+
+  const onSubmit: SubmitHandler<THotel> = async (values) => {
+    // setLoading(true);
+    if (hotel) {
+      try {
+        const result = await updateHotel(values, hotel.id);
+        if (result?.success) {
+          toast.success(result.success);
+          setImageUrl("");
+          setImageKey("");
+          form.reset();
+          router.push("/dashboard/hotels");
+        }
+        // setLoading(false);
+      } catch (error) {
+        toast.error(error);
+        // setLoading(false);
+      }
+    } else {
+      try {
+        const result = await createHotel(values);
+        if (result?.success) {
+          toast.success(result.success);
+          setImageUrl("");
+          setImageKey("");
+          setStates([]);
+          form.reset();
+          router.push("/dashboard/hotels");
+        }
+        // setLoading(false);
+      } catch (error) {
+        toast.error(error);
+        // setLoading(false);
+      }
     }
   };
 
@@ -123,14 +200,20 @@ const HotelForm = () => {
     return () => subscription.unsubscribe();
   }, [form]);
 
+  const handleDialogueOpen = () => {
+    setOpen((prev) => !prev);
+  };
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="grid grid-cols-2 gap-3 space-y-4"
+      >
         <FormField
           control={form.control}
           name="title"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="col-span-2">
               <FormLabel>Title</FormLabel>
               <FormControl>
                 <Input placeholder="title" {...field} />
@@ -143,22 +226,26 @@ const HotelForm = () => {
           control={form.control}
           name="description"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="col-span-2">
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea placeholder="description" {...field} />
+                <Textarea
+                  className="min-w-10"
+                  placeholder="description"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <div className="mt-2 grid grid-cols-2 gap-4">
-          <div>
-            <FormLabel>Choose Amenities</FormLabel>
-            <FormDescription>
-              Choose Amenities Popular in your hotel
-            </FormDescription>
-          </div>
+        <div className="col-span-2 space-y-2">
+          <FormLabel>Choose Amenities</FormLabel>
+          <FormDescription>
+            Choose Amenities Popular in your hotel
+          </FormDescription>
+        </div>
+        <div className="col-span-2 mt-4 grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="gym"
@@ -292,52 +379,52 @@ const HotelForm = () => {
           control={form.control}
           name="image"
           render={({ field }) => (
-            <FormItem className="flex items-end space-x-3">
+            <FormItem className="col-span-2">
               <FormLabel>Choose an Image</FormLabel>
               <FormControl>
                 <Input type="hidden" placeholder="Image" {...field} />
               </FormControl>
+              {imageUrl ? (
+                <div className="relative rounded border">
+                  <Image
+                    src={imageUrl}
+                    alt="img"
+                    height={400}
+                    width={400}
+                    className="object-contain"
+                  />
+                  <Button
+                    className="absolute right-0 top-0"
+                    onClick={() => handleRemove()}
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                  >
+                    <X />
+                  </Button>
+                </div>
+              ) : (
+                <UploadButton
+                  endpoint="imageUploader"
+                  className="flex w-full flex-row gap-x-2 rounded bg-green-100 p-4 text-green-900"
+                  onClientUploadComplete={(res) => {
+                    // Do something with the response
+                    console.log("Files: ", res);
+                    setImageUrl(res[0].url);
+                    setImageKey(res[0].key);
+                    form.setValue("image", res[0].url);
+                    toast.success("Upload Completed" + res[0].url);
+                  }}
+                  onUploadError={(error: Error) => {
+                    // Do something with the error.
+                    toast.error(`ERROR! ${error.message}`);
+                  }}
+                />
+              )}
               <FormMessage />
             </FormItem>
           )}
         />
-        {imageUrl ? (
-          <div className="relative rounded border">
-            <Image
-              src={imageUrl}
-              alt="img"
-              height={400}
-              width={400}
-              className="object-contain"
-            />
-            <Button
-              className="absolute right-0 top-0"
-              onClick={() => handleRemove()}
-              type="button"
-              size="icon"
-              variant="ghost"
-            >
-              <X />
-            </Button>
-          </div>
-        ) : (
-          <UploadButton
-            endpoint="imageUploader"
-            className="rounded-secondary flex w-full flex-row gap-x-2 bg-green-100 p-4 text-green-900"
-            onClientUploadComplete={(res) => {
-              // Do something with the response
-              console.log("Files: ", res);
-              setImageUrl(res[0].url);
-              setImageKey(res[0].key);
-              form.setValue("image", res[0].url);
-              toast.success("Upload Completed" + res[0].url);
-            }}
-            onUploadError={(error: Error) => {
-              // Do something with the error.
-              toast.error(`ERROR! ${error.message}`);
-            }}
-          />
-        )}
         <FormField
           control={form.control}
           name="type"
@@ -347,7 +434,10 @@ const HotelForm = () => {
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a preferred type" />
+                    <SelectValue
+                      className="w-full"
+                      placeholder="Select a preferred type"
+                    />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -459,38 +549,113 @@ const HotelForm = () => {
             </FormItem>
           )}
         />
-        <div className="flex flex-wrap justify-between gap-2">
-          {/*{hotel ? (*/}
-          {/*  <Button disabled={loading} className="max-w-[150px]">*/}
-          {/*    {loading ? (*/}
-          {/*      <Fragment>*/}
-          {/*        <Loader2 className="mr-2 size-4" />*/}
-          {/*        updating*/}
-          {/*      </Fragment>*/}
-          {/*    ) : (*/}
-          {/*      <Fragment>*/}
-          {/*        <PencilLine className="size-4" />*/}
-          {/*        Update*/}
-          {/*      </Fragment>*/}
-          {/*    )}*/}
-          {/*  </Button>*/}
-          {/*) : (*/}
-          {/*  <Button className="max-w-[150px]" disabled={loading}>*/}
-          {/*    {loading ? (*/}
-          {/*      <Fragment>*/}
-          {/*        <Loader2 className="size-4" />*/}
-          {/*        Creating*/}
-          {/*      </Fragment>*/}
-          {/*    ) : (*/}
-          {/*      <Fragment>*/}
-          {/*        <PencilLine className="size-4" />*/}
-          {/*        Create Hotel*/}
-          {/*      </Fragment>*/}
-          {/*    )}*/}
-          {/*  </Button>*/}
-          {/*)}*/}
-          <Button type="submit">Submit</Button>
+        {hotel && !hotel.room.length && (
+          <Alert className="bg-indigo-500 text-white">
+            <Terminal className="size-4 stroke-white" />
+            <AlertTitle>One last step!</AlertTitle>
+            <AlertDescription>
+              Your hotel was created successfully, but you need to add rooms to
+              your hotel
+            </AlertDescription>
+          </Alert>
+        )}
+        <div className="col-span-2 flex justify-end gap-2 space-x-4">
+          {hotel && (
+            <Button
+              onClick={() => handleDeleteHotel(hotel)}
+              variant="outline"
+              className="max-w-[150px]"
+              disabled={isHotelDeleting || loading}
+            >
+              {isHotelDeleting ? (
+                <Fragment>
+                  <Loader2 className="mr-2 size-4" />
+                  Deleting
+                </Fragment>
+              ) : (
+                <Fragment>
+                  <Trash2 className="size-4" />
+                  Delete
+                </Fragment>
+              )}
+            </Button>
+          )}
+          {hotel && (
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger>
+                <Button
+                  type="button"
+                  variant={"outline"}
+                  className="max-w-[150px]"
+                >
+                  <Plus className="size-4" />
+                  Add Room
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="h-full w-11/12 max-w-[900px] overflow-y-scroll">
+                <DialogHeader className="px-2">
+                  <DialogTitle>Add a room</DialogTitle>
+                  <DialogDescription>
+                    Add a room by filling the given information
+                  </DialogDescription>
+                </DialogHeader>
+                <RoomForm
+                  hotel={hotel}
+                  handleDialogueOpen={handleDialogueOpen}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {/* {hotel && (
+            <Button
+              variant="ghost"
+              className="max-w-[150px]"
+              disabled={isHotelDeleting || loading}
+            >
+              <Link href={`/dashboard/hotels/${hotel.id}`}>View</Link>
+            </Button>
+          )} */}
+
+          {hotel ? (
+            <Button disabled={loading} className="max-w-[150px]">
+              {loading ? (
+                <Fragment>
+                  <Loader2 className="mr-2 size-4" />
+                  updating
+                </Fragment>
+              ) : (
+                <Fragment>
+                  <PencilLine className="size-4" />
+                  Update
+                </Fragment>
+              )}
+            </Button>
+          ) : (
+            <Button className="max-w-[150px]" disabled={loading}>
+              {loading ? (
+                <Fragment>
+                  <Loader2 className="size-4" />
+                  Creating
+                </Fragment>
+              ) : (
+                <Fragment>
+                  <PencilLine className="size-4" />
+                  Create Hotel
+                </Fragment>
+              )}
+            </Button>
+          )}
         </div>
+        <Separator className="col-span-2" />
+        <h3 className="my-4 text-lg font-bold">Hotel Rooms</h3>
+        {hotel && !!hotel.room.length && (
+          <div className="col-span-2 grid grid-cols-2 gap-4 max-md:grid-cols-1">
+            {hotel.room.map((item) => (
+              <RoomCard key={item.id} hotel={hotel} room={item} />
+            ))}
+          </div>
+        )}
       </form>
     </Form>
   );

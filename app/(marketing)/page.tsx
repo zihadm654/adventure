@@ -1,3 +1,5 @@
+import { getHotels } from "@/actions/hotel-listings";
+
 import { infos } from "@/config/landing";
 import Advantage from "@/components/home/advantage/Advantage";
 import BestSelling from "@/components/home/bestSelling/BestSelling";
@@ -12,12 +14,24 @@ import Powered from "@/components/sections/powered";
 import PreviewLanding from "@/components/sections/preview-landing";
 import Testimonials from "@/components/sections/testimonials";
 
-export default function IndexPage() {
+interface IProps {
+  searchParams: {
+    title: string;
+    country: string;
+    state: string;
+    city: string;
+  };
+}
+
+export default async function IndexPage({ searchParams }: IProps) {
+  const hotels = await getHotels(searchParams);
+  if (!hotels) return <div>No hotels found</div>;
+  console.log(hotels, "hotels");
   return (
     <>
       <Hero />
       <Offer />
-      <BestSelling />
+      <BestSelling hotels={hotels} />
       <Advantage />
       <Testimonials />
       <Gallery />

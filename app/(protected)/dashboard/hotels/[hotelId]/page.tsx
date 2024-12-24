@@ -19,7 +19,7 @@ const page = async ({ params }: HotelProps) => {
     return <div>Access denied...</div>;
   return (
     <div>
-      <HotelForm />
+      <HotelForm hotel={hotel} />
     </div>
   );
 };
