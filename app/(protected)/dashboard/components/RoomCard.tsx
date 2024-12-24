@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
+import { usePathname } from "next/navigation";
 import { imageRemove } from "@/actions/image-remove";
 import { deleteRoomById } from "@/actions/room-listing";
 import { Hotel, Reservation, Room } from "@prisma/client";
@@ -78,9 +79,10 @@ const RoomCard = ({ hotel, room, reservation }: RoomCardProps) => {
       toast.error("Error deleting room");
     }
   };
-
+  const pathname = usePathname();
+  const isMyHotel = pathname.includes("/dashboard/hotels");
   return (
-    <Card className="px-2">
+    <Card>
       <CardHeader>{room.title}</CardHeader>
       <CardDescription className="px-4 pb-3">
         {room.description}
@@ -140,76 +142,55 @@ const RoomCard = ({ hotel, room, reservation }: RoomCardProps) => {
       </CardContent>
       <Separator />
       <CardFooter className="col-span-2 grid grid-cols-2 gap-4 py-3">
-        <h4>Room Price: ${room.price} / day</h4>
-        <h4>Room Price: ${room.price} / day</h4>
-        <Button
-          onClick={() => handleDeleteRoom(room)}
-          variant="outline"
-          className="max-w-[150px]"
-          disabled={loading}
-        >
-          {loading ? (
-            <Fragment>
-              <Loader2 className="mr-2 size-4" />
-              Deleting
-            </Fragment>
-          ) : (
-            <Fragment>
-              <Trash2 className="size-4" />
-              Delete
-            </Fragment>
-          )}
-        </Button>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger>
-            <Button type="button" variant={"outline"} className="max-w-[150px]">
-              <Pencil className="size-4" />
-              Update Room
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="h-full w-11/12 max-w-[900px] overflow-y-scroll">
-            <DialogHeader className="px-2">
-              <DialogTitle>Update room</DialogTitle>
-              <DialogDescription>
-                update a room by filling the given information
-              </DialogDescription>
-            </DialogHeader>
-            <RoomForm
-              hotel={hotel}
-              room={room}
-              handleDialogueOpen={handleDialogueOpen}
-            />
-          </DialogContent>
-        </Dialog>
-        {/* {hotel ? (
-            <Button disabled={loading} className="max-w-[150px]">
+        <h5>Room Price: ${room.price} / day</h5>
+        <h5>Room Price: ${room.price} / day</h5>
+        {!isMyHotel && (
+          <>
+            <Button
+              onClick={() => handleDeleteRoom(room)}
+              variant="outline"
+              className="max-w-[150px]"
+              disabled={loading}
+            >
               {loading ? (
                 <Fragment>
                   <Loader2 className="mr-2 size-4" />
-                  updating
+                  Deleting
                 </Fragment>
               ) : (
                 <Fragment>
-                  <PencilLine className="size-4" />
-                  Update
+                  <Trash2 className="size-4" />
+                  Delete
                 </Fragment>
               )}
             </Button>
-          ) : (
-            <Button className="max-w-[150px]" disabled={loading}>
-              {loading ? (
-                <Fragment>
-                  <Loader2 className="size-4" />
-                  Creating
-                </Fragment>
-              ) : (
-                <Fragment>
-                  <PencilLine className="size-4" />
-                  Create Hotel
-                </Fragment>
-              )}
-            </Button>
-          )} */}
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger>
+                <Button
+                  type="button"
+                  variant={"outline"}
+                  className="max-w-[150px]"
+                >
+                  <Pencil className="size-4" />
+                  Update Room
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="h-full w-11/12 max-w-[900px] overflow-y-scroll">
+                <DialogHeader className="px-2">
+                  <DialogTitle>Update room</DialogTitle>
+                  <DialogDescription>
+                    update a room by filling the given information
+                  </DialogDescription>
+                </DialogHeader>
+                <RoomForm
+                  hotel={hotel}
+                  room={room}
+                  handleDialogueOpen={handleDialogueOpen}
+                />
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
       </CardFooter>
     </Card>
   );

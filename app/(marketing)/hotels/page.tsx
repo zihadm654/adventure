@@ -1,12 +1,9 @@
-import Link from "next/link";
 import { getHotels } from "@/actions/hotel-listings";
 
 import { constructMetadata } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { DashboardHeader } from "@/components/dashboard/header";
-
-import { columns } from "../components/columns";
-import { DataTable } from "../components/data-table";
+import { columns } from "@/app/(protected)/dashboard/components/columns";
+import { DataTable } from "@/app/(protected)/dashboard/components/data-table";
 
 export const metadata = constructMetadata({
   title: "Hotels - Advanture",
@@ -27,10 +24,6 @@ export default async function ChartsPage({ searchParams }: IProps) {
   if ("error" in hotels) {
     return <div>Error loading hotels: {hotels.error}</div>;
   }
-  return (
-    <>
-      <DashboardHeader heading="Hotels" text="List of hotels." />
-      {hotels && <DataTable columns={columns} data={hotels} />}
-    </>
-  );
+
+  return <>{hotels && <DataTable columns={columns} data={hotels} />}</>;
 }
