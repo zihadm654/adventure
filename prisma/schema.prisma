@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider     = "mongodb"
-  url          = env("DATABASE_URL")
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 enum UserRole {
@@ -17,16 +17,16 @@ enum UserRole {
 
 model Account {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String  @db.ObjectId
+  userId            String   @db.ObjectId
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?  
-  access_token      String? 
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? 
+  id_token          String?
   session_state     String?
   createdAt         DateTime @default(now()) @map(name: "created_at")
   updatedAt         DateTime @default(now()) @map(name: "updated_at")
@@ -42,7 +42,7 @@ model Session {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   sessionToken String   @unique
   userId       String   @db.ObjectId
-  expires      DateTime @map(name:"expires_at")
+  expires      DateTime @map(name: "expires_at")
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -61,10 +61,10 @@ model User {
 
   accounts Account[]
   sessions Session[]
-  hotel Hotel[]
-  review Review[]
+  hotel    Hotel[]
+  review   Review[]
   favorite Favorite[]
-  
+
   @@map(name: "users")
 }
 
@@ -77,106 +77,115 @@ model VerificationToken {
   @@unique([identifier, token])
   @@map(name: "verification_tokens")
 }
+
 model Hotel {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  title String
+  title       String
   description String
-  image String
-  country String
-  city String
-  state String
-  location String
-  type String
-  gym Boolean @default(false)
-  pool Boolean @default(false)
-  wifi Boolean @default(false)
-  parking Boolean @default(false)
-  spa Boolean @default(false)
-  laundry Boolean @default(false)
-  bikeRental Boolean @default(false)
-  coffeeShop Boolean @default(false)
-  restaurant Boolean @default(false)
-  bar Boolean @default(false)
+  image       String
+  country     String
+  city        String
+  state       String
+  location    String
+  type        String
+  gym         Boolean @default(false)
+  pool        Boolean @default(false)
+  wifi        Boolean @default(false)
+  parking     Boolean @default(false)
+  spa         Boolean @default(false)
+  laundry     Boolean @default(false)
+  bikeRental  Boolean @default(false)
+  coffeeShop  Boolean @default(false)
+  restaurant  Boolean @default(false)
+  bar         Boolean @default(false)
 
-  userId       String   @db.ObjectId
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now()) @map(name: "created_at")
   updatedAt DateTime @default(now()) @map(name: "updated_at")
 
-  room Room[]
+  room        Room[]
   reservation Reservation[]
-  
+
   @@map(name: "hotels")
 }
-model Room{
+
+model Room {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  title String
-  description String
-  image String
-  price Int
-  guest Int @default(0)
-  bed Int @default(1)
-  bathroom Int @default(1)
-  balcony Boolean @default(false)
-  roomservice Boolean @default(false)
-  tv Boolean @default(false)
-  ac Boolean @default(false)
-  view Boolean @default(false)
-  wifi Boolean @default(false)
+  title          String
+  description    String
+  image          String
+  breakfastPrice Int     @default(0)
+  price          Int     @default(0)
+  guest          Int     @default(0)
+  bed            Int     @default(1)
+  bathroom       Int     @default(1)
+  balcony        Boolean @default(false)
+  roomservice    Boolean @default(false)
+  tv             Boolean @default(false)
+  ac             Boolean @default(false)
+  view           Boolean @default(false)
+  wifi           Boolean @default(false)
 
-  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  hotel   Hotel  @relation(fields: [hotelId], references: [id], onDelete: Cascade)
   hotelId String @db.ObjectId
 
   Reservation Reservation[]
+
   @@map(name: "rooms")
 }
-model Reservation{
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  
-  userId String @db.ObjectId
-  hotelId String @db.ObjectId
-  roomId String @db.ObjectId
 
-  startDate DateTime
-  endDate DateTime
-  price Int
+model Reservation {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  userId  String @db.ObjectId
+  hotelId String @db.ObjectId
+  roomId  String @db.ObjectId
+
+  startDate         DateTime
+  endDate           DateTime
+  price             Int
   breakfastIncluded Boolean
-  currency String
-  paymentIntentId String @unique
-  paymentStatus Boolean @default(false)
+  currency          String
+  totalPrice        Int
+  paymentIntentId   String   @unique
+  paymentStatus     Boolean  @default(false)
 
   createdAt DateTime @default(now()) @map(name: "created_at")
 
   hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
-  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  
+  room  Room  @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
   @@unique([paymentIntentId, hotelId, roomId])
   @@map(name: "reservations")
 }
-model Review{
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  userId String @db.ObjectId
-  rentId String @db.ObjectId
+
+model Review {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String @db.ObjectId
+  rentId  String @db.ObjectId
   comment String
-  rating Int
+  rating  Int
 
   createdAt DateTime @default(now()) @map(name: "created_at")
   updatedAt DateTime @default(now()) @map(name: "updated_at")
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map(name: "reviews")
 }
 
 model Favorite {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  userId String @db.ObjectId
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String @db.ObjectId
   hotelId String @db.ObjectId
 
   createdAt DateTime @default(now()) @map(name: "created_at")
 
-  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("favorites")
 }
