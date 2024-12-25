@@ -11,8 +11,6 @@ import hotelTypes from "@/content/data/hotelTypes";
 //   // setRatings,
 //   // resetFilter,
 // } from "@/features/filter/filterSlice";
-// import { AiOutlineReload } from "react-icons/ai";
-// import { BiSolidStar } from "react-icons/bi";
 // import { useDispatch } from "react-redux";
 
 import useGetCountries from "@/hooks/useLocation";

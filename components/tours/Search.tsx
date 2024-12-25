@@ -14,7 +14,7 @@
  */
 
 import React from "react";
-import { BiSearchAlt } from "react-icons/bi";
+import { SearchIcon } from "lucide-react";
 
 const Search = () => {
   return (
@@ -27,7 +27,7 @@ const Search = () => {
         className="!rounded-secondary form-input border-1 w-full border-primary px-4"
       />
       <button className="rounded-secondary flex flex-row items-center justify-center border border-primary bg-white px-2">
-        <BiSearchAlt className="size-6" />
+        <SearchIcon className="size-6" />
       </button>
     </section>
   );

@@ -25,7 +25,6 @@ import {
   X,
 } from "lucide-react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { IoCloudUploadOutline } from "react-icons/io5";
 import { toast } from "sonner";
 
 import { hotelSchema, THotel } from "@/lib/validations/listing";
