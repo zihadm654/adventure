@@ -1,10 +1,12 @@
 "use client";
 
-import { Fragment, useState } from "react";
-import { usePathname } from "next/navigation";
+import { Fragment, useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { createPaymentIntent } from "@/actions/create-payment-intent";
 import { imageRemove } from "@/actions/image-remove";
 import { deleteRoomById } from "@/actions/room-listing";
 import { Hotel, Reservation, Room } from "@prisma/client";
+import { addDays, differenceInCalendarDays } from "date-fns";
 import {
   AirVent,
   Bath,
@@ -19,10 +21,13 @@ import {
   Tv,
   Users,
   UtensilsCrossed,
+  Wand2,
   Wifi,
 } from "lucide-react";
+import { DateRange } from "react-day-picker";
 import { toast } from "sonner";
 
+import useRoomReservation from "@/hooks/useReservation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,6 +36,8 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import {
   Dialog,
   DialogContent,
@@ -53,11 +60,36 @@ interface RoomCardProps {
 const RoomCard = ({ hotel, room, reservation }: RoomCardProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [reservationLoading, setReservationLoading] = useState(false);
+  const [date, setDate] = useState<DateRange | undefined>();
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [days, setDays] = useState(0);
+  const [includeBreakfast, setIncludeBreakfast] = useState(false);
+
+  const router = useRouter();
+  const {
+    setRoomData,
+    setPaymentIntentId,
+    paymentIntentId,
+    setClientSecret,
+    clientSecret,
+  } = useRoomReservation();
+
+  useEffect(() => {
+    if (date && date.from && date.to) {
+      const dayCount = differenceInCalendarDays(date.to, date.from);
+      setDays(dayCount);
+      if (dayCount && includeBreakfast && room.breakfastPrice) {
+        setTotalPrice(dayCount * room.price + dayCount * room.breakfastPrice);
+      } else {
+        setTotalPrice(room.price * dayCount);
+      }
+    }
+  }, [date, includeBreakfast, room.breakfastPrice, room.price]);
 
   const handleDialogueOpen = () => {
     setOpen((prev) => !prev);
   };
-
   //delete room and image
   const handleDeleteRoom = async (room: Room) => {
     // setLoading(true);
@@ -79,12 +111,58 @@ const RoomCard = ({ hotel, room, reservation }: RoomCardProps) => {
       toast.error("Error deleting room");
     }
   };
+
+  const handleReservation = async () => {
+    if (!hotel?.userId) return toast.error("something went wrong");
+
+    if (date && date.from && date.to) {
+      setReservationLoading(true);
+      const reservationData = {
+        room,
+        totalPrice,
+        breakfastIncluded: includeBreakfast,
+        startDate: date.from,
+        endDate: date.to,
+      };
+      setRoomData(reservationData);
+      await createPaymentIntent(
+        {
+          hotelId: hotel.id,
+          userId: hotel.userId,
+          roomId: room.id,
+          startDate: date.from,
+          endDate: date.to,
+          breakfastIncluded: includeBreakfast,
+          totalPrice: totalPrice,
+        },
+        paymentIntentId,
+      )
+        .then((res: any) => {
+          setReservationLoading(false);
+          if (res.status === 401) {
+            return router.push("/login");
+          }
+          return res.json();
+        })
+        .then((data) => {
+          setClientSecret(data.paymentIntent.clientSecret);
+          setPaymentIntentId(data.paymentIntent.id);
+          router.push("/reservation");
+        })
+        .catch((err) => {
+          toast.error(err);
+        });
+    } else {
+      toast.error("Please select dates");
+    }
+  };
+
   const pathname = usePathname();
-  const isMyHotel = pathname.includes("/dashboard/hotels");
+  const isMyHotel = pathname.includes("/dashboard");
   return (
     <Card>
       <CardHeader>{room.title}</CardHeader>
-      <CardDescription className="px-4 pb-3">
+      <CardDescription className="px-4 pb-3 text-base">
         {room.description}
       </CardDescription>
       <CardContent>
@@ -142,10 +220,14 @@ const RoomCard = ({ hotel, room, reservation }: RoomCardProps) => {
       </CardContent>
       <Separator />
       <CardFooter className="col-span-2 grid grid-cols-2 gap-4 py-3">
-        <h5>Room Price: ${room.price} / day</h5>
-        <h5>Room Price: ${room.price} / day</h5>
-        {!isMyHotel && (
-          <>
+        <p>
+          Room Price: <b>${room.price}</b> / day
+        </p>
+        <p>
+          Breakfast Price: <b>${room.breakfastPrice}</b> / day
+        </p>
+        {isMyHotel ? (
+          <div className="col-span-2 flex w-full items-center justify-between gap-2">
             <Button
               onClick={() => handleDeleteRoom(room)}
               variant="outline"
@@ -189,7 +271,41 @@ const RoomCard = ({ hotel, room, reservation }: RoomCardProps) => {
                 />
               </DialogContent>
             </Dialog>
-          </>
+          </div>
+        ) : (
+          <div className="col-span-2">
+            <p className="mb-2">Select days that you will spend in this room</p>
+            <DatePickerWithRange date={date} setDate={setDate} />
+            {room.breakfastPrice > 0 && (
+              <div className="pt-3">
+                <div className="flex items-center justify-start gap-3">
+                  <Checkbox
+                    id="breakfast"
+                    onCheckedChange={(value) => setIncludeBreakfast(!!value)}
+                  />
+                  <label htmlFor="breakfast">
+                    Include Breakfast to be served breakfast each day
+                  </label>
+                </div>
+              </div>
+            )}
+            <p className="my-3">
+              Total Price: <b>{totalPrice}</b> for
+              <b> {days} days</b>
+            </p>
+            <Button
+              onClick={handleReservation}
+              disabled={reservationLoading}
+              type="button"
+            >
+              {reservationLoading ? (
+                <Loader2 className="size-4" />
+              ) : (
+                <Wand2 className="size-4" />
+              )}
+              {reservationLoading ? "Reserving" : "Reserve"}
+            </Button>
+          </div>
         )}
       </CardFooter>
     </Card>

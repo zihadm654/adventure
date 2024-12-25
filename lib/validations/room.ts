@@ -12,6 +12,7 @@ export const roomSchema = z.object({
   guest: z.coerce.number().int().positive(),
   bed: z.coerce.number().int().positive(),
   bathroom: z.coerce.number().int().positive(),
+  breakfastPrice: z.coerce.number().int().positive(),
   balcony: z.boolean().default(false),
   roomservice: z.boolean().default(false),
   wifi: z.boolean().default(false),

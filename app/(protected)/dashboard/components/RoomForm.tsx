@@ -355,6 +355,25 @@ const RoomForm = ({ hotel, room, handleDialogueOpen }: props) => {
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="breakfastPrice"
+            render={({ field }) => (
+              <FormItem className="col-span-2">
+                <FormLabel>Breakfast Price</FormLabel>
+                <FormControl>
+                  <Input
+                    min={0}
+                    type="number"
+                    className="min-w-10"
+                    placeholder="Breakfast price"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           {room ? (
             <Button disabled={loading} className="max-w-[150px]">
               {loading ? (

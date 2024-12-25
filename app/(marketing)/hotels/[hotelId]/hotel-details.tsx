@@ -89,7 +89,7 @@ const HotelDetails = ({ hotel }: { hotel: HotelWithRooms }) => {
       <Separator />
       {!!hotel.room.length && (
         <div className="my-4 text-lg">
-          <h3 className="text-xl">Hotel Rooms</h3>
+          <h3 className="pb-4 text-xl">Hotel Rooms</h3>
           <div className="flex flex-wrap items-center justify-between gap-4">
             {hotel?.room.map((room) => (
               <RoomCard key={room.id} hotel={hotel} room={room} />
