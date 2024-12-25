@@ -13,10 +13,6 @@ export async function getHotels(searchParams: {
   state: string;
   city: string;
 }) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return redirect("/login");
-  }
   try {
     const { title, country, state, city } = searchParams;
 
