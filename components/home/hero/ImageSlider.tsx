@@ -55,6 +55,7 @@ const ImageSlider = ({ images, delay }) => {
           {images.map((_, i) => (
             <div
               key={i}
+              // eslint-disable-next-line tailwindcss/migration-from-tailwind-2
               className={`size-3 rounded-full bg-white transition-all ${currentImageIndex === i ? "p-2" : "bg-opacity-50"} `}
             />
           ))}
