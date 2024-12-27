@@ -1,5 +1,6 @@
 "use client";
 
+import { Reservation } from "@prisma/client";
 import {
   Bike,
   Coffee,
@@ -19,7 +20,13 @@ import RoomCard, {
   AmmenityItem,
 } from "@/app/(protected)/dashboard/components/RoomCard";
 
-const HotelDetails = ({ hotel }: { hotel: HotelWithRooms }) => {
+const HotelDetails = ({
+  hotel,
+  reservations,
+}: {
+  hotel: HotelWithRooms;
+  reservations?: Reservation[];
+}) => {
   const { getCountryByCode } = useLocation();
   const country = getCountryByCode(hotel.country);
 
@@ -92,7 +99,12 @@ const HotelDetails = ({ hotel }: { hotel: HotelWithRooms }) => {
           <h3 className="pb-4 text-xl">Hotel Rooms</h3>
           <div className="flex flex-wrap items-center justify-between gap-4">
             {hotel?.room.map((room) => (
-              <RoomCard key={room.id} hotel={hotel} room={room} />
+              <RoomCard
+                key={room.id}
+                hotel={hotel}
+                room={room}
+                reservations={reservations}
+              />
             ))}
           </div>
         </div>

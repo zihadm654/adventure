@@ -1,12 +1,11 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { createPaymentIntent } from "@/actions/create-payment-intent";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { redirect, usePathname, useRouter } from "next/navigation";
 import { imageRemove } from "@/actions/image-remove";
 import { deleteRoomById } from "@/actions/room-listing";
 import { Hotel, Reservation, Room } from "@prisma/client";
-import { addDays, differenceInCalendarDays } from "date-fns";
+import { addDays, differenceInCalendarDays, eachDayOfInterval } from "date-fns";
 import {
   AirVent,
   Bath,
@@ -54,10 +53,10 @@ import RoomForm from "./RoomForm";
 interface RoomCardProps {
   hotel?: Hotel & { room: Room[] };
   room: Room;
-  reservation?: Reservation[];
+  reservations?: Reservation[];
 }
 
-const RoomCard = ({ hotel, room, reservation }: RoomCardProps) => {
+const RoomCard = ({ hotel, room, reservations = [] }: RoomCardProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [reservationLoading, setReservationLoading] = useState(false);
@@ -87,6 +86,20 @@ const RoomCard = ({ hotel, room, reservation }: RoomCardProps) => {
     }
   }, [date, includeBreakfast, room.breakfastPrice, room.price]);
 
+  const disabledDates = useMemo(() => {
+    let dates: Date[] = [];
+    const roomReservation = reservations.filter(
+      (reservation) => reservation.roomId === room.id,
+    );
+    roomReservation.forEach((reservation) => {
+      const range = eachDayOfInterval({
+        start: new Date(reservation.startDate),
+        end: new Date(reservation.endDate),
+      });
+      dates = [...dates, ...range];
+    });
+    return dates;
+  }, [reservations]);
   const handleDialogueOpen = () => {
     setOpen((prev) => !prev);
   };
@@ -125,33 +138,40 @@ const RoomCard = ({ hotel, room, reservation }: RoomCardProps) => {
         endDate: date.to,
       };
       setRoomData(reservationData);
-      await createPaymentIntent(
-        {
-          hotelId: hotel.id,
-          userId: hotel.userId,
-          roomId: room.id,
-          startDate: date.from,
-          endDate: date.to,
-          breakfastIncluded: includeBreakfast,
-          totalPrice: totalPrice,
-        },
-        paymentIntentId,
-      )
-        .then((res: any) => {
-          setReservationLoading(false);
-          if (res.status === 401) {
-            return router.push("/login");
-          }
-          return res.json();
-        })
-        .then((data) => {
-          setClientSecret(data.paymentIntent.clientSecret);
-          setPaymentIntentId(data.paymentIntent.id);
-          router.push("/reservation");
-        })
-        .catch((err) => {
-          toast.error(err);
+      try {
+        const res = await fetch("/api/create-payment-intent", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            reserve: {
+              hotelId: hotel.id,
+              userId: hotel.userId,
+              roomId: room.id,
+              startDate: date.from,
+              endDate: date.to,
+              breakfastIncluded: includeBreakfast,
+              totalPrice: totalPrice,
+            },
+            paymentIntentId: paymentIntentId,
+          }),
         });
+        setReservationLoading(false);
+
+        if (res.status === 401) {
+          return router.push("/login");
+        }
+        const data = await res.json();
+        console.log(data);
+
+        setClientSecret(data.client_secret);
+        setPaymentIntentId(data.id);
+        router.push("/reservation");
+      } catch (error) {
+        console.log(error, "error");
+        toast.error("something went wrong");
+      }
     } else {
       toast.error("Please select dates");
     }
@@ -275,7 +295,11 @@ const RoomCard = ({ hotel, room, reservation }: RoomCardProps) => {
         ) : (
           <div className="col-span-2">
             <p className="mb-2">Select days that you will spend in this room</p>
-            <DatePickerWithRange date={date} setDate={setDate} />
+            <DatePickerWithRange
+              date={date}
+              setDate={setDate}
+              disabledDates={disabledDates}
+            />
             {room.breakfastPrice > 0 && (
               <div className="pt-3">
                 <div className="flex items-center justify-start gap-3">
