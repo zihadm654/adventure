@@ -37,9 +37,7 @@ export async function createRoom(data: TRoom, hotelId: string) {
       return { error: error };
     }
   }
-
-  // TODO: perform desired action / mutation
-  revalidatePath("/dashboard/hotels/" + hotelId);
+  revalidatePath(`/dashboard/hotels/${hotelId}`);
 }
 
 export async function updateRoom(data: TRoom, roomId: string, hotelId: string) {
@@ -63,9 +61,7 @@ export async function updateRoom(data: TRoom, roomId: string, hotelId: string) {
       return { error: error };
     }
   }
-
-  // TODO: perform desired action / mutation
-  revalidatePath("/dashboard/hotels/" + hotelId);
+  revalidatePath(`/dashboard/hotels/${hotelId}`);
 }
 
 export async function getRoomById(roomId: string) {
@@ -75,15 +71,13 @@ export async function getRoomById(roomId: string) {
         id: roomId,
       },
     });
-
     if (!room) return null;
 
     return room;
   } catch (error: any) {
-    // throw new Error(error);
     console.log(error);
+    throw new Error(error);
   }
-  revalidatePath("/dashboard/rooms");
 }
 export async function deleteRoomById(roomId: string) {
   const currentUser = await getCurrentUser();
@@ -96,7 +90,7 @@ export async function deleteRoomById(roomId: string) {
         id: roomId,
       },
     });
-    revalidatePath("/dashboard/hotels");
+    // revalidatePath(`/dashboard/hotels/${room.hotelId}`);
     return { success: "room has been deleted" };
   } catch (error: any) {
     throw new Error(error);

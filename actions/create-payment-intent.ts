@@ -1,21 +1,33 @@
-import { revalidatePath } from "next/cache";
-import { NextResponse } from "next/server";
+"use server";
+
 import Stripe from "stripe";
 
+import { env } from "@/env.mjs";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
   apiVersion: "2024-04-10",
 });
-
-export async function POST(req: Request) {
+interface IProps {
+  reserve: {
+    hotelId: string;
+    userId: string;
+    roomId: string;
+    startDate: Date;
+    endDate: Date;
+    breakfastIncluded: boolean;
+    totalPrice: number;
+  };
+  paymentIntentId: string;
+}
+export async function createPaymentIntent({
+  reserve,
+  paymentIntentId,
+}: IProps) {
   const user = await getCurrentUser();
-  if (!user)
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!user) return null;
 
-  const body = await req.json();
-  const { reserve, paymentIntentId } = body;
   const reservationData = {
     ...reserve,
     userId: user.id as string,
@@ -47,6 +59,7 @@ export async function POST(req: Request) {
         },
       );
 
+      // const { paymentIntentId: _, ...updateData } = reservationData;
       const updateReservation = await prisma.reservation.update({
         where: {
           paymentIntentId: paymentIntentId,
@@ -55,13 +68,9 @@ export async function POST(req: Request) {
         data: reservationData,
       });
       if (!updateReservation) {
-        return NextResponse.json({ error: "something went wrong" });
+        return new Error("something went wrong");
       }
-      revalidatePath("/dashboard/reservations");
-      return NextResponse.json({
-        success: "updated reservation",
-        paymentIntent: update_intent,
-      });
+      return { success: true, paymentIntent: update_intent };
     }
   } else {
     const paymentIntent = await stripe.paymentIntents.create({
@@ -75,11 +84,7 @@ export async function POST(req: Request) {
         paymentIntentId: paymentIntent.id,
       },
     });
-    revalidatePath("/dashboard/reservations");
-    return NextResponse.json({
-      success: "successfully created reservation",
-      paymentIntent,
-    });
+    return { success: true, paymentIntent: paymentIntent };
   }
-  return NextResponse.json({ error: "internal server error", status: 400 });
+  return new Error("internal server error");
 }

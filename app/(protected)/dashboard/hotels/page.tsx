@@ -1,12 +1,10 @@
-import Link from "next/link";
-import { getHotels } from "@/actions/hotel-listings";
+import { getUserHotels } from "@/actions/hotel-listings";
 
+import { getCurrentUser } from "@/lib/session";
 import { constructMetadata } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { columns } from "@/components/dashboard/data-table/columns";
+import { DataTable } from "@/components/dashboard/data-table/data-table";
 import { DashboardHeader } from "@/components/dashboard/header";
-
-import { columns } from "../components/columns";
-import { DataTable } from "../components/data-table";
 
 export const metadata = constructMetadata({
   title: "Hotels - Advanture",
@@ -21,7 +19,8 @@ interface IProps {
   };
 }
 export default async function ChartsPage({ searchParams }: IProps) {
-  const hotels = await getHotels(searchParams);
+  const currentUser = await getCurrentUser();
+  const hotels = await getUserHotels(searchParams, currentUser?.id!);
   console.log(hotels, "hotels");
   if (!hotels) return <div>hotels not found</div>;
   if ("error" in hotels) {

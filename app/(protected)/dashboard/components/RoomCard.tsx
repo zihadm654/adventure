@@ -89,7 +89,8 @@ const RoomCard = ({ hotel, room, reservations = [] }: RoomCardProps) => {
   const disabledDates = useMemo(() => {
     let dates: Date[] = [];
     const roomReservation = reservations.filter(
-      (reservation) => reservation.roomId === room.id,
+      (reservation) =>
+        reservation.roomId === room.id && reservation.paymentStatus,
     );
     roomReservation.forEach((reservation) => {
       const range = eachDayOfInterval({
@@ -99,7 +100,7 @@ const RoomCard = ({ hotel, room, reservations = [] }: RoomCardProps) => {
       dates = [...dates, ...range];
     });
     return dates;
-  }, [reservations]);
+  }, [reservations, room.id]);
   const handleDialogueOpen = () => {
     setOpen((prev) => !prev);
   };
@@ -179,6 +180,7 @@ const RoomCard = ({ hotel, room, reservations = [] }: RoomCardProps) => {
 
   const pathname = usePathname();
   const isMyHotel = pathname.includes("/dashboard");
+  const isMyReservation = pathname.includes("/reservation");
   return (
     <Card>
       <CardHeader>{room.title}</CardHeader>
@@ -239,99 +241,108 @@ const RoomCard = ({ hotel, room, reservations = [] }: RoomCardProps) => {
         </div>
       </CardContent>
       <Separator />
-      <CardFooter className="col-span-2 grid grid-cols-2 gap-4 py-3">
-        <p>
-          Room Price: <b>${room.price}</b> / day
-        </p>
-        <p>
-          Breakfast Price: <b>${room.breakfastPrice}</b> / day
-        </p>
-        {isMyHotel ? (
-          <div className="col-span-2 flex w-full items-center justify-between gap-2">
-            <Button
-              onClick={() => handleDeleteRoom(room)}
-              variant="outline"
-              className="max-w-[150px]"
-              disabled={loading}
-            >
-              {loading ? (
-                <Fragment>
-                  <Loader2 className="mr-2 size-4" />
-                  Deleting
-                </Fragment>
-              ) : (
-                <Fragment>
-                  <Trash2 className="size-4" />
-                  Delete
-                </Fragment>
-              )}
-            </Button>
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger>
-                <Button
-                  type="button"
-                  variant={"outline"}
-                  className="max-w-[150px]"
-                >
-                  <Pencil className="size-4" />
-                  Update Room
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="h-full w-11/12 max-w-[900px] overflow-y-scroll">
-                <DialogHeader className="px-2">
-                  <DialogTitle>Update room</DialogTitle>
-                  <DialogDescription>
-                    update a room by filling the given information
-                  </DialogDescription>
-                </DialogHeader>
-                <RoomForm
-                  hotel={hotel}
-                  room={room}
-                  handleDialogueOpen={handleDialogueOpen}
-                />
-              </DialogContent>
-            </Dialog>
-          </div>
-        ) : (
-          <div className="col-span-2">
-            <p className="mb-2">Select days that you will spend in this room</p>
-            <DatePickerWithRange
-              date={date}
-              setDate={setDate}
-              disabledDates={disabledDates}
-            />
-            {room.breakfastPrice > 0 && (
-              <div className="pt-3">
-                <div className="flex items-center justify-start gap-3">
-                  <Checkbox
-                    id="breakfast"
-                    onCheckedChange={(value) => setIncludeBreakfast(!!value)}
+      {!isMyReservation && (
+        <CardFooter className="col-span-2 grid grid-cols-2 gap-4 py-3">
+          <p>
+            Room Price: <b>${room.price}</b> / day
+          </p>
+          <p>
+            Breakfast Price: <b>${room.breakfastPrice}</b> / day
+          </p>
+          {isMyHotel ? (
+            <div className="col-span-2 flex w-full items-center justify-between gap-2">
+              <Button
+                onClick={() => handleDeleteRoom(room)}
+                variant="outline"
+                className="max-w-[150px]"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Fragment>
+                    <Loader2 className="mr-2 size-4" />
+                    Deleting
+                  </Fragment>
+                ) : (
+                  <Fragment>
+                    <Trash2 className="size-4" />
+                    Delete
+                  </Fragment>
+                )}
+              </Button>
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger>
+                  <Button
+                    type="button"
+                    variant={"outline"}
+                    className="max-w-[150px]"
+                  >
+                    <Pencil className="size-4" />
+                    Update Room
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="h-full w-11/12 max-w-[900px] overflow-y-scroll">
+                  <DialogHeader className="px-2">
+                    <DialogTitle>Update room</DialogTitle>
+                    <DialogDescription>
+                      update a room by filling the given information
+                    </DialogDescription>
+                  </DialogHeader>
+                  <RoomForm
+                    hotel={hotel}
+                    room={room}
+                    handleDialogueOpen={handleDialogueOpen}
                   />
-                  <label htmlFor="breakfast">
-                    Include Breakfast to be served breakfast each day
-                  </label>
+                </DialogContent>
+              </Dialog>
+            </div>
+          ) : (
+            <div className="col-span-2">
+              <p className="mb-2 text-base">
+                Select days that you will spend in this room
+              </p>
+              <DatePickerWithRange
+                date={date}
+                setDate={setDate}
+                disabledDates={disabledDates}
+              />
+              {room.breakfastPrice > 0 && (
+                <div className="pt-3">
+                  <div className="flex items-center justify-start gap-3">
+                    <Checkbox
+                      id="breakfast"
+                      onCheckedChange={(value) => setIncludeBreakfast(!!value)}
+                    />
+                    <label
+                      htmlFor="breakfast"
+                      className="text-sm text-gray-600"
+                    >
+                      Include Breakfast to be served breakfast each day
+                    </label>
+                  </div>
                 </div>
-              </div>
-            )}
-            <p className="my-3">
-              Total Price: <b>{totalPrice}</b> for
-              <b> {days} days</b>
-            </p>
-            <Button
-              onClick={handleReservation}
-              disabled={reservationLoading}
-              type="button"
-            >
-              {reservationLoading ? (
-                <Loader2 className="size-4" />
-              ) : (
-                <Wand2 className="size-4" />
               )}
-              {reservationLoading ? "Reserving" : "Reserve"}
-            </Button>
-          </div>
-        )}
-      </CardFooter>
+              <div className="flex items-center justify-between gap-3">
+                <p className="my-3 text-base">
+                  Total Price: <b>{totalPrice}</b> for
+                  <b> {days} days</b>
+                </p>
+                <Button
+                  onClick={handleReservation}
+                  disabled={reservationLoading}
+                  type="button"
+                >
+                  {reservationLoading ? (
+                    <Loader2 className="size-4" />
+                  ) : (
+                    <Wand2 className="size-4" />
+                  )}
+                  {reservationLoading ? "Reserving" : "Reserve"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardFooter>
+      )}
     </Card>
   );
 };

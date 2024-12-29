@@ -19,7 +19,11 @@ export const sidebarLinks: SidebarNavItem[] = [
         title: "Hotels",
         authorizeOnly: UserRole.USER,
       },
-      // { href: "/dashboard/charts", icon: "lineChart", title: "Charts" },
+      {
+        href: "/dashboard/reservations",
+        icon: "post",
+        title: "Reservations",
+      },
       {
         href: "/admin/orders",
         icon: "package",

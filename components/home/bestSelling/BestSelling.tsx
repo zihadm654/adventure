@@ -45,7 +45,7 @@ export const HotelCard = ({ hotel }: { hotel: HotelWithRooms }) => {
   const country = getCountryByCode(hotel.country);
   const router = useRouter();
   const pathname = usePathname();
-  const isMyHotel = pathname.includes("/dashboard/hotels");
+  const isMyHotel = pathname.includes("/hotels");
 
   return (
     <Card
@@ -64,7 +64,7 @@ export const HotelCard = ({ hotel }: { hotel: HotelWithRooms }) => {
         {hotel.description.substring(0, 50)}...
       </CardDescription>
       <AmmenityItem>
-        <MapPin className="size-4" /> {country?.name}, {hotel.city}
+        <MapPin className="ml-2 size-4" /> {country?.name}, {hotel.city}
       </AmmenityItem>
       <CardContent className="grid grid-cols-2 gap-3 p-3">
         {hotel.pool && (

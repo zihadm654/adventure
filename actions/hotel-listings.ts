@@ -34,6 +34,21 @@ export async function getHotels(searchParams: {
     return { error: error };
   }
 }
+export async function getUserHotels(userId: string) {
+  try {
+    const hotels = await prisma.hotel.findMany({
+      where: {
+        userId,
+      },
+      include: {
+        room: true,
+      },
+    });
+    return hotels;
+  } catch (error) {
+    return { error: error };
+  }
+}
 export async function createHotel(data: THotel) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
