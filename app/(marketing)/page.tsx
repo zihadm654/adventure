@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getHotels } from "@/actions/hotel-listings";
 
 import { infos } from "@/config/landing";
@@ -16,10 +17,10 @@ import Testimonials from "@/components/sections/testimonials";
 
 interface IProps {
   searchParams: {
-    title: string;
-    country: string;
-    state: string;
-    city: string;
+    title?: string;
+    country?: string;
+    state?: string;
+    city?: string;
   };
 }
 
@@ -31,7 +32,9 @@ export default async function IndexPage({ searchParams }: IProps) {
     <>
       <Hero />
       <Offer />
-      <BestSelling hotels={hotels} />
+      <Suspense fallback={<div>Loading...</div>}>
+        <BestSelling hotels={hotels} />
+      </Suspense>
       <Advantage />
       <Testimonials />
       <Gallery />

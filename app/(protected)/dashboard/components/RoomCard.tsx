@@ -195,7 +195,7 @@ const RoomCard = ({ hotel, room, reservations = [] }: RoomCardProps) => {
           width={400}
           className="h-48 w-full object-cover"
         />
-        <div className="mt-2 grid grid-cols-2 content-start gap-2 text-sm">
+        <div className="mt-2 flex flex-wrap items-center justify-start gap-2 text-sm">
           <AmmenityItem>
             <Bed className="size-4" />
             {room.bed} Bed

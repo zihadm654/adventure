@@ -17,6 +17,8 @@ import { ModalContext } from "@/components/modals/providers";
 import { Icons } from "@/components/shared/icons";
 import MaxWidthWrapper from "@/components/shared/max-width-wrapper";
 
+import SearchBar from "../home/SearchBar";
+
 interface NavBarProps {
   scroll?: boolean;
   large?: boolean;
@@ -75,6 +77,7 @@ export function NavBar({ scroll = false }: NavBarProps) {
               ))}
             </nav>
           ) : null}
+          <SearchBar />
         </div>
 
         <div className="flex items-center space-x-3">

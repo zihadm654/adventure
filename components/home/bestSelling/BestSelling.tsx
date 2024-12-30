@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Hotel } from "@prisma/client";
 import {
   Bike,
   Coffee,
@@ -59,14 +60,14 @@ export const HotelCard = ({ hotel }: { hotel: HotelWithRooms }) => {
         height={300}
         className="w-full rounded object-cover"
       />
-      <CardTitle className="px-2 py-4">{hotel.title}</CardTitle>
+      <CardTitle className="p-2">{hotel.title}</CardTitle>
       <CardDescription className="p-2">
         {hotel.description.substring(0, 50)}...
       </CardDescription>
       <AmmenityItem>
         <MapPin className="ml-2 size-4" /> {country?.name}, {hotel.city}
       </AmmenityItem>
-      <CardContent className="grid grid-cols-2 gap-3 p-3">
+      <CardContent className="flex flex-wrap items-center justify-start gap-3 p-3">
         {hotel.pool && (
           <AmmenityItem>
             <Waves className="size-4" /> Pool

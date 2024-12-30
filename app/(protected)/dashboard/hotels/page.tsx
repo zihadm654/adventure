@@ -20,7 +20,7 @@ interface IProps {
 }
 export default async function ChartsPage({ searchParams }: IProps) {
   const currentUser = await getCurrentUser();
-  const hotels = await getUserHotels(searchParams, currentUser?.id!);
+  const hotels = await getUserHotels(currentUser?.id!);
   console.log(hotels, "hotels");
   if (!hotels) return <div>hotels not found</div>;
   if ("error" in hotels) {

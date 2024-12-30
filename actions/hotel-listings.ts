@@ -7,24 +7,31 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { hotelSchema, THotel } from "@/lib/validations/listing";
 
-export async function getHotels(searchParams: {
-  title: string;
-  country: string;
-  state: string;
-  city: string;
-}) {
+interface IParams {
+  title?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+}
+export async function getHotels(searchParams: IParams) {
   try {
     const { title, country, state, city } = searchParams;
+    let query: IParams = {};
 
+    if (title) {
+      query.title = title;
+    }
+    if (country) {
+      query.country = country;
+    }
+    if (state) {
+      query.state = state;
+    }
+    if (city) {
+      query.city = city;
+    }
     const hotels = await prisma.hotel.findMany({
-      where: {
-        title: {
-          contains: title,
-        },
-        country,
-        state,
-        city,
-      },
+      where: { ...query, title: { contains: title } },
       include: {
         room: true,
       },
