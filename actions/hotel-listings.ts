@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
@@ -16,22 +17,14 @@ interface IParams {
 export async function getHotels(searchParams: IParams) {
   try {
     const { title, country, state, city } = searchParams;
-    let query: IParams = {};
 
-    if (title) {
-      query.title = title;
-    }
-    if (country) {
-      query.country = country;
-    }
-    if (state) {
-      query.state = state;
-    }
-    if (city) {
-      query.city = city;
-    }
     const hotels = await prisma.hotel.findMany({
-      where: { ...query, title: { contains: title } },
+      where: {
+        title: { contains: title },
+        country,
+        state,
+        city,
+      },
       include: {
         room: true,
       },
@@ -42,6 +35,10 @@ export async function getHotels(searchParams: IParams) {
   }
 }
 export async function getUserHotels(userId: string) {
+  const session = await auth();
+  if (!session?.user || session?.user.id !== userId) {
+    throw new Error("Unauthorized");
+  }
   try {
     const hotels = await prisma.hotel.findMany({
       where: {
@@ -56,10 +53,10 @@ export async function getUserHotels(userId: string) {
     return { error: error };
   }
 }
-export async function createHotel(data: THotel) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return redirect("/login");
+export async function createHotel(data: THotel, userId: string) {
+  const session = await auth();
+  if (!session?.user || session?.user.id !== userId) {
+    throw new Error("Unauthorized");
   }
   const result = hotelSchema.safeParse(data);
   await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -67,7 +64,7 @@ export async function createHotel(data: THotel) {
   if (result.success) {
     try {
       await prisma.hotel.create({
-        data: { ...result.data, userId: currentUser.id || "" },
+        data: { ...result.data, userId: userId },
       });
       return { success: "hotel has been created" };
     } catch (error) {
@@ -79,10 +76,14 @@ export async function createHotel(data: THotel) {
   revalidatePath("/dashboard/hotels");
 }
 
-export async function updateHotel(data: THotel, hotelId: string) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return redirect("/login");
+export async function updateHotel(
+  data: THotel,
+  hotelId: string,
+  userId: string,
+) {
+  const session = await auth();
+  if (!session?.user || session?.user.id !== userId) {
+    throw new Error("Unauthorized");
   }
   const result = hotelSchema.safeParse(data);
   await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -93,7 +94,7 @@ export async function updateHotel(data: THotel, hotelId: string) {
         where: {
           id: hotelId,
         },
-        data: { ...result.data, userId: currentUser.id || "" },
+        data: { ...result.data, userId: userId },
       });
       return { success: "hotel has been updated" };
     } catch (error) {
@@ -126,9 +127,9 @@ export async function getHotelById(hotelId: string) {
   revalidatePath("/dashboard/hotels");
 }
 export async function deleteHotelById(hotelId: string) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return redirect("/login");
+  const session = await auth();
+  if (!session?.user || session?.user.id) {
+    throw new Error("Unauthorized");
   }
   try {
     await prisma.hotel.delete({

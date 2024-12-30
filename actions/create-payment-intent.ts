@@ -1,10 +1,10 @@
 "use server";
 
+import { auth } from "@/auth";
 import Stripe from "stripe";
 
 import { env } from "@/env.mjs";
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/session";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
   apiVersion: "2024-04-10",
@@ -25,12 +25,14 @@ export async function createPaymentIntent({
   reserve,
   paymentIntentId,
 }: IProps) {
-  const user = await getCurrentUser();
-  if (!user) return null;
+  const session = await auth();
+  if (!session?.user || session?.user.id !== reserve.userId) {
+    throw new Error("Unauthorized");
+  }
 
   const reservationData = {
     ...reserve,
-    userId: user.id as string,
+    userId: session.user.id,
     currency: "usd",
     paymentIntentId,
   };
@@ -41,7 +43,7 @@ export async function createPaymentIntent({
     reservationFound = await prisma.reservation.findUnique({
       where: {
         paymentIntentId,
-        userId: user.id,
+        userId: session.user.id,
       },
     });
   }
@@ -63,7 +65,7 @@ export async function createPaymentIntent({
       const updateReservation = await prisma.reservation.update({
         where: {
           paymentIntentId: paymentIntentId,
-          userId: user.id,
+          userId: session.user.id,
         },
         data: reservationData,
       });

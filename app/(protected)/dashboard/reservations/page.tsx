@@ -10,6 +10,8 @@ export const metadata = constructMetadata({
   description: "List of Reservations",
 });
 
+export const dynamic = "force-dynamic";
+
 export default async function ChartsPage() {
   const myReservations = await getReservationByUserId();
 

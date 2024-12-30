@@ -2,16 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/session";
 import { roomSchema, TRoom } from "@/lib/validations/room";
 
 export async function getRooms() {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return redirect("/login");
-  }
   try {
     const data = await prisma.room.findMany();
     return { success: "room has been fetched successfully", data };
@@ -20,9 +16,9 @@ export async function getRooms() {
   }
 }
 export async function createRoom(data: TRoom, hotelId: string) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return redirect("/login");
+  const session = await auth();
+  if (!session?.user || session?.user.id) {
+    throw new Error("Unauthorized");
   }
   const result = roomSchema.safeParse(data);
   await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -41,9 +37,9 @@ export async function createRoom(data: TRoom, hotelId: string) {
 }
 
 export async function updateRoom(data: TRoom, roomId: string, hotelId: string) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return redirect("/login");
+  const session = await auth();
+  if (!session?.user || session?.user.id) {
+    throw new Error("Unauthorized");
   }
   const result = roomSchema.safeParse(data);
   await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -80,9 +76,9 @@ export async function getRoomById(roomId: string) {
   }
 }
 export async function deleteRoomById(roomId: string) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return redirect("/login");
+  const session = await auth();
+  if (!session?.user || session?.user.id) {
+    throw new Error("Unauthorized");
   }
   try {
     await prisma.room.delete({

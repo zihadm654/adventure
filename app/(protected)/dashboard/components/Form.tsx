@@ -22,6 +22,7 @@ import {
   Plus,
   Terminal,
   Trash2,
+  User,
   X,
 } from "lucide-react";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -65,10 +66,11 @@ import RoomForm from "./RoomForm";
 
 interface HotelProps {
   hotel?: HotelWithRooms | null;
+  userId: string;
 }
 export type HotelWithRooms = Hotel & { room: Room[] };
 
-const HotelForm = ({ hotel }: HotelProps) => {
+const HotelForm = ({ hotel, userId }: HotelProps) => {
   const form = useForm<THotel>({
     resolver: zodResolver(hotelSchema),
     defaultValues: hotel || {
@@ -159,7 +161,7 @@ const HotelForm = ({ hotel }: HotelProps) => {
     // setLoading(true);
     if (hotel) {
       try {
-        const result = await updateHotel(values, hotel.id);
+        const result = await updateHotel(values, hotel.id, userId);
         if (result?.success) {
           toast.success(result.success);
           setImageUrl("");
@@ -174,7 +176,7 @@ const HotelForm = ({ hotel }: HotelProps) => {
       }
     } else {
       try {
-        const result = await createHotel(values);
+        const result = await createHotel(values, userId);
         if (result?.success) {
           toast.success(result.success);
           setImageUrl("");

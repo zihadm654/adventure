@@ -1,15 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/session";
 
 export async function getReservations(roomId: string) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return redirect("/login");
+  const session = await auth();
+  if (!session?.user || session?.user.id) {
+    throw new Error("Unauthorized");
   }
   if (!roomId) return null;
   try {
@@ -32,11 +31,12 @@ export async function getReservations(roomId: string) {
 }
 export const getReservationByUserId = async () => {
   try {
-    const currentUser = await getCurrentUser();
-
-    if (!currentUser?.id) throw new Error("unauthorized");
+    const session = await auth();
+    if (!session?.user || session?.user.id) {
+      throw new Error("Unauthorized");
+    }
     const reservations = await prisma.reservation.findMany({
-      where: { userId: currentUser.id },
+      where: { userId: session.user.id },
       include: {
         room: true,
         hotel: true,
@@ -76,9 +76,9 @@ export const getReservationByUserId = async () => {
 // }
 
 export async function updateReservation(id: string) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return redirect("/login");
+  const session = await auth();
+  if (!session?.user || session?.user.id) {
+    throw new Error("Unauthorized");
   }
   if (!id) throw new Error("require id");
 
@@ -99,9 +99,9 @@ export async function updateReservation(id: string) {
 }
 
 export async function deleteReservationById(id: string) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    return redirect("/login");
+  const session = await auth();
+  if (!session?.user || session?.user.id) {
+    throw new Error("Unauthorized");
   }
   if (!id) throw new Error("require id");
   try {
