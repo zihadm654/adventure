@@ -6,10 +6,6 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 
 export async function getReservations(roomId: string) {
-  const session = await auth();
-  if (!session?.user || session?.user.id) {
-    throw new Error("Unauthorized");
-  }
   if (!roomId) return null;
   try {
     const yesterday = new Date();

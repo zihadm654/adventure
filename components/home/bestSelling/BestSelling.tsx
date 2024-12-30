@@ -30,8 +30,8 @@ const BestSelling = ({ hotels }: any) => {
   return (
     <section className="container py-5">
       <h2 className="pb-4 text-3xl font-bold">Best Selling</h2>
-      <div className="mt-5 grid grid-cols-3 gap-4 max-md:grid-cols-2">
-        {hotels.map((hotel: HotelWithRooms) => (
+      <div className="mt-3 grid grid-cols-3 gap-4 max-md:grid-cols-1">
+        {hotels?.map((hotel: HotelWithRooms) => (
           <HotelCard hotel={hotel} key={hotel.id} />
         ))}
       </div>
@@ -45,14 +45,9 @@ export const HotelCard = ({ hotel }: { hotel: HotelWithRooms }) => {
   const { getCountryByCode } = useLocation();
   const country = getCountryByCode(hotel.country);
   const router = useRouter();
-  const pathname = usePathname();
-  const isMyHotel = pathname.includes("/hotels");
 
   return (
-    <Card
-      onClick={() => !isMyHotel && router.push(`/hotels/${hotel.id}`)}
-      key={hotel.id}
-    >
+    <Card onClick={() => router.push(`/hotels/${hotel.id}`)} key={hotel.id}>
       <BlurImage
         src={hotel.image}
         alt={hotel.title}
@@ -110,11 +105,6 @@ export const HotelCard = ({ hotel }: { hotel: HotelWithRooms }) => {
             <h3>${hotel?.room[0].price}</h3>
             <p> / day</p>
           </div>
-        )}
-        {!!isMyHotel && (
-          <Link type="button" href={`/hotels/${hotel.id}`}>
-            Edit
-          </Link>
         )}
       </CardFooter>
     </Card>

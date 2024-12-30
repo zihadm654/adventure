@@ -1,24 +1,24 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import Stripe from "stripe";
 
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/session";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2024-04-10",
 });
 
 export async function POST(req: Request) {
-  const user = await getCurrentUser();
-  if (!user)
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-
+  const session = await auth();
+  if (!session?.user || session?.user.id) {
+    throw new Error("Unauthorized");
+  }
   const body = await req.json();
   const { reserve, paymentIntentId } = body;
   const reservationData = {
     ...reserve,
-    userId: user.id as string,
+    userId: session.user.id,
     currency: "usd",
     paymentIntentId,
   };
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     reservationFound = await prisma.reservation.findUnique({
       where: {
         paymentIntentId,
-        userId: user.id,
+        userId: session.user.id,
       },
     });
   }
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       const updateReservation = await prisma.reservation.update({
         where: {
           paymentIntentId: paymentIntentId,
-          userId: user.id,
+          userId: session.user.id,
         },
         data: reservationData,
       });
